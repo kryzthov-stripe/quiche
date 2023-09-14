@@ -298,7 +298,12 @@ bool CallbackVisitor::OnCloseStream(Http2StreamId stream_id,
     result = callbacks_->on_stream_close_callback(
         nullptr, stream_id, static_cast<uint32_t>(error_code), user_data_);
   }
-  stream_map_.erase(stream_id);
+
+  // XXX(kryzthov): do not erase stream info entries, but mark as closed for use-after-close detection:
+  // stream_map_.erase(stream_id);
+  auto it = GetStreamInfo(stream_id);
+  it->second.closed = true;
+
   if (stream_close_listener_) {
     stream_close_listener_(stream_id);
   }
@@ -501,6 +506,9 @@ CallbackVisitor::StreamInfoMap::iterator CallbackVisitor::GetStreamInfo(
   if (it == stream_map_.end()) {
     auto p = stream_map_.insert({stream_id, {}});
     it = p.first;
+  }
+  if (it->second.closed) {
+    QUICHE_LOG(ERROR) << "Stream use after close stream_id=" << stream_id;
   }
   return it;
 }

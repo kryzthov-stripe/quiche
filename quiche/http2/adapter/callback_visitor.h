@@ -83,6 +83,7 @@ class QUICHE_EXPORT CallbackVisitor : public Http2VisitorInterface {
     bool before_sent_headers = false;
     bool sent_headers = false;
     bool received_headers = false;
+    bool closed = false;
   };
 
   using StreamInfoMap = absl::flat_hash_map<Http2StreamId, StreamInfo>;
